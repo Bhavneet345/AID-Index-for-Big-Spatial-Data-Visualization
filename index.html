@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tile Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        #tile-container {
+            display: grid;
+            grid-template-columns: repeat(5, 256px); /* 5 tiles per row */
+            grid-gap: 2px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        .tile {
+            width: 256px;
+            height: 256px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ccc;
+        }
+        .tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .controls {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Interactive Tile Viewer</h1>
+    <div class="controls">
+        <button onclick="zoomOut()">Zoom Out</button>
+        <button onclick="zoomIn()">Zoom In</button>
+        <button onclick="pan(-1, 0)">← Left</button>
+        <button onclick="pan(1, 0)">→ Right</button>
+        <button onclick="pan(0, -1)">↑ Up</button>
+        <button onclick="pan(0, 1)">↓ Down</button>
+    </div>
+    <div id="tile-container"></div>
+
+    <script>
+        const TILE_SIZE = 256;
+        const GRID_SIZE = 5; // 5x5 grid
+        let zoom = 2; // Starting zoom level
+        let centerX = 0; // Starting center x-coordinate
+        let centerY = 0; // Starting center y-coordinate
+        const tileContainer = document.getElementById('tile-container');
+
+        // Fetch and display tiles
+        function loadTiles() {
+            tileContainer.innerHTML = ''; // Clear the grid
+
+            const halfGrid = Math.floor(GRID_SIZE / 2);
+            for (let dx = -halfGrid; dx <= halfGrid; dx++) {
+                for (let dy = -halfGrid; dy <= halfGrid; dy++) {
+                    const x = centerX + dx;
+                    const y = centerY + dy;
+                    const tileId = `${zoom}_${x}_${y}`;
+                    const tileUrl = `http://localhost:5000/tile/${zoom}/${x}/${y}`;
+                    const tileDiv = document.createElement('div');
+                    tileDiv.className = 'tile';
+
+                    // Fetch tile and display
+                    const img = new Image();
+                    img.src = tileUrl;
+                    img.alt = `Tile ${tileId}`;
+                    img.onerror = () => (tileDiv.innerHTML = 'Missing Tile'); // Show "Missing Tile" if not found
+                    tileDiv.appendChild(img);
+                    tileContainer.appendChild(tileDiv);
+                }
+            }
+        }
+
+        // Pan the grid
+        function pan(dx, dy) {
+            centerX += dx;
+            centerY += dy;
+            loadTiles();
+        }
+
+        // Zoom in
+        function zoomIn() {
+            zoom = Math.min(zoom + 1, 5); // Limit max zoom level
+            loadTiles();
+        }
+
+        // Zoom out
+        function zoomOut() {
+            zoom = Math.max(zoom - 1, 0); // Limit min zoom level
+            loadTiles();
+        }
+
+        // Initial load
+        loadTiles();
+    </script>
+</body>
+</html>
